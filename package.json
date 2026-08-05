@@ -1,0 +1,14 @@
+{
+  "name": "osint-caller-id-api",
+  "version": "1.0.0",
+  "description": "Custom OSINT API for Caller ID lookup",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "truecallerjs": "^1.1.2"
+  }
+}
