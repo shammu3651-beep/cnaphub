@@ -1,3 +1,4 @@
+require('dotenv').config(); // Load environment variables from .env file
 const express = require('express');
 const cors = require('cors');
 const truecallerjs = require('truecallerjs');
@@ -7,15 +8,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.static('public')); // Frontend folder ko serve karne ke liye
+app.use(express.static('public')); 
 
-// ⚠️ IMPORTANT: Yahan apne generated tokens daalo
+// Securely fetching tokens from environment variables
 const searchData = {
-    key: "YOUR_BEARER_TOKEN_HERE",
-    installationId: "YOUR_INSTALLATION_ID_HERE"
+    key: process.env.TRUECALLER_KEY,
+    installationId: process.env.TRUECALLER_INSTALLATION_ID
 };
 
-// API Endpoint
 app.get('/api/callerid', async (req, res) => {
     const number = req.query.number;
     
@@ -23,8 +23,13 @@ app.get('/api/callerid', async (req, res) => {
         return res.status(400).json({ status: "error", message: "Number is required" });
     }
 
+    // Checking if credentials exist
+    if (!searchData.key || !searchData.installationId) {
+        console.error("Missing API Credentials in environment variables!");
+        return res.status(500).json({ status: "error", message: "Server Configuration Error" });
+    }
+
     try {
-        // Search logic using truecallerjs
         const response = await truecallerjs.search(searchData, "IN", number);
         const data = response.json();
 
@@ -34,7 +39,7 @@ app.get('/api/callerid', async (req, res) => {
                 status: "success",
                 name: result.name || "Unknown",
                 number: number,
-                carrier: result.phones[0].carrier || "Unknown",
+                carrier: result.phones && result.phones.length > 0 ? result.phones[0].carrier : "Unknown",
                 email: result.internetAddresses && result.internetAddresses.length > 0 ? result.internetAddresses[0].id : "Not Found"
             });
         } else {
@@ -46,7 +51,6 @@ app.get('/api/callerid', async (req, res) => {
     }
 });
 
-// Start Server
 app.listen(PORT, () => {
     console.log(`🚀 OSINT API Server running at http://localhost:${PORT}`);
 });
