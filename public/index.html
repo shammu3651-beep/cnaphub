@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSINT Caller ID | Recon</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+        body { background-color: #0f172a; color: #e2e8f0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .container { background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 400px; text-align: center; border: 1px solid #334155; }
+        h2 { margin-bottom: 20px; color: #38bdf8; text-transform: uppercase; letter-spacing: 2px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 16px; outline: none; text-align: center; }
+        input:focus { border-color: #38bdf8; }
+        button { width: 100%; padding: 12px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        button:hover { background: #1d4ed8; }
+        .result-box { margin-top: 20px; padding: 15px; background: #0f172a; border-radius: 6px; text-align: left; display: none; border: 1px solid #334155; }
+        .result-box p { margin: 8px 0; font-size: 14px; }
+        .label { color: #94a3b8; font-weight: bold; }
+        .value { color: #10b981; }
+        .error { color: #ef4444; text-align: center; margin-top: 15px; display: none; }
+        .loader { display: none; margin-top: 15px; color: #38bdf8; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>OSINT Recon</h2>
+    <input type="number" id="phoneInput" placeholder="Enter 10-digit number" autocomplete="off">
+    <button onclick="fetchCallerId()">Execute Scan</button>
+    
+    <div id="loader" class="loader">Scanning databases...</div>
+    <div id="errorBox" class="error"></div>
+    
+    <div id="resultBox" class="result-box">
+        <p><span class="label">TARGET NAME :</span> <span class="value" id="resName"></span></p>
+        <p><span class="label">NUMBER      :</span> <span class="value" id="resNumber"></span></p>
+        <p><span class="label">CARRIER     :</span> <span class="value" id="resCarrier"></span></p>
+        <p><span class="label">EMAIL       :</span> <span class="value" id="resEmail"></span></p>
+    </div>
+</div>
+
+<script>
+    async function fetchCallerId() {
+        const number = document.getElementById('phoneInput').value;
+        const resultBox = document.getElementById('resultBox');
+        const errorBox = document.getElementById('errorBox');
+        const loader = document.getElementById('loader');
+
+        if (!number || number.length < 10) {
+            errorBox.innerText = "Error: Invalid Target Number";
+            errorBox.style.display = 'block';
+            resultBox.style.display = 'none';
+            return;
+        }
+
+        errorBox.style.display = 'none';
+        resultBox.style.display = 'none';
+        loader.style.display = 'block';
+
+        try {
+            const response = await fetch(`/api/callerid?number=${number}`);
+            const data = await response.json();
+
+            loader.style.display = 'none';
+
+            if (data.status === "success") {
+                document.getElementById('resName').innerText = data.name;
+                document.getElementById('resNumber').innerText = data.number;
+                document.getElementById('resCarrier').innerText = data.carrier;
+                document.getElementById('resEmail').innerText = data.email;
+                resultBox.style.display = 'block';
+            } else {
+                errorBox.innerText = "Error: " + data.message;
+                errorBox.style.display = 'block';
+            }
+        } catch (error) {
+            loader.style.display = 'none';
+            errorBox.innerText = "System Error: Connection Failed";
+            errorBox.style.display = 'block';
+        }
+    }
+</script>
+
+</body>
+</html>
